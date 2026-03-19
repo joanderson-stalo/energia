@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
-type Step = "start" | "bill" | "success";
+type Step = "start" | "bill" | "plants" | "success";
 
 type Plant = {
   id: string;
@@ -11,11 +11,11 @@ type Plant = {
   discount: number;
 };
 
-const plantNames: Plant[] = [
-  { id: "1", name: "Usina 1", discount: 0 },
-  { id: "2", name: "Usina 2", discount: 0 },
-  { id: "3", name: "Usina 3", discount: 0 },
-];
+const plants: Plant[] = Array.from({ length: 11 }, (_, idx) => ({
+  id: String(idx + 1),
+  name: `Usina ${idx + 1}`,
+  discount: Math.max(1, Math.round(Math.random() * 10)),
+}));
 
 const fakeBarcode = "83620000001028670001002032000456789123456789";
 const baseValue = 320.7;
@@ -33,12 +33,6 @@ export default function Home() {
   const appliedValue = selectedPlant
     ? baseValue * (1 - selectedPlant.discount / 100)
     : baseValue;
-
-  const pickRandomPlant = () => {
-    const randomPlant = plantNames[Math.floor(Math.random() * plantNames.length)];
-    const randomDiscount = Math.max(1, Math.round(Math.random() * 10));
-    setSelectedPlant({ ...randomPlant, discount: randomDiscount });
-  };
 
   const resetFlow = () => {
     setStep("start");
@@ -104,8 +98,7 @@ export default function Home() {
                 <button
                   className="rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-[1px] hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
-                    pickRandomPlant();
-                    setStep("success");
+                    setStep("plants");
                   }}
                   disabled={!billCode}
                 >
@@ -115,8 +108,7 @@ export default function Home() {
                   className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/5"
                   onClick={() => {
                     setBillCode(fakeBarcode);
-                    pickRandomPlant();
-                    setStep("success");
+                    setStep("plants");
                   }}
                 >
                   Escanear código (demo)
@@ -149,6 +141,56 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </section>
+        </main>
+      )}
+
+      {step === "plants" && (
+        <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-10 px-4 py-12 sm:px-8 lg:py-16">
+          <header className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Logo compact />
+              <div>
+                <p className="text-sm text-slate-200">Selecione a usina</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100">
+              Passo 2/2
+            </span>
+          </header>
+
+          <section className="space-y-6">
+            <p className="text-lg text-slate-200">
+              Escolha uma usina para aplicar o desconto. Cada opção já exibe o percentual.
+            </p>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {plants.map((plant) => (
+                <button
+                  key={plant.id}
+                  className="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-5 text-left transition hover:-translate-y-1 hover:border-emerald-300/60 hover:bg-white/10"
+                  onClick={() => {
+                    setSelectedPlant(plant);
+                    setStep("success");
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-semibold text-white">{plant.name}</p>
+                    <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-100">
+                      -{plant.discount}%
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-200">
+                    Aplicado sobre {formatter.format(baseValue)}.
+                  </p>
+                </button>
+              ))}
+            </div>
+            <button
+              className="self-start text-sm text-slate-300 underline underline-offset-4 hover:text-white"
+              onClick={() => setStep("bill")}
+            >
+              Voltar para código de barras
+            </button>
           </section>
         </main>
       )}
